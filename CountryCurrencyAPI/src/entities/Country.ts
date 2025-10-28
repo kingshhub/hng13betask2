@@ -1,5 +1,3 @@
-// TypeORM Entity defining the MySQL table for Country data
-
 import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn } from 'typeorm';
 
 @Entity('countries')

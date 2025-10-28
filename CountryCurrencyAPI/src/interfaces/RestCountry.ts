@@ -1,5 +1,3 @@
-// Interface for the data fetched from the Rest Countries API
-
 export interface RestCountryCurrency {
     code: string;
     name: string;
@@ -11,6 +9,6 @@ export interface RestCountry {
     capital?: string;
     region?: string;
     population: number;
-    flag: string; // The URL for the flag
+    flag: string;
     currencies?: RestCountryCurrency[];
 }

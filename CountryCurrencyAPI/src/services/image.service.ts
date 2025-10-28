@@ -139,12 +139,7 @@ const generateHtmlContent = (
     `;
 };
 
-/**
- * Generates and saves the summary image to cache/summary.png.
- * @param countries - Top 5 countries for GDP
- * @param totalCountries - Total count of countries
- * @param lastRefresh - Last refresh timestamp
- */
+
 export const generateSummaryImage = async (
     countries: Country[],
     totalCountries: number,

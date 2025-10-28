@@ -1,5 +1,3 @@
-// Interface for the processed country data before saving to DB
-
 export interface ICountry {
     name: string;
     capital: string | null;

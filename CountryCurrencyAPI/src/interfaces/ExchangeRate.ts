@@ -1,5 +1,3 @@
-// Interface for the data fetched from the Open ER API
-
 export interface ExchangeRate {
     result: string;
     documentation: string;

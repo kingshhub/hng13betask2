@@ -12,7 +12,7 @@ export const AppDataSource = new DataSource({
     username: env.DB_USER,
     password: env.DB_PASSWORD,
     database: env.DB_NAME,
-    synchronize: true, // Use synchronize for development/caching setup
+    synchronize: true,
     logging: ['error', 'warn'],
     entities: [Country, Status],
     migrations: [],

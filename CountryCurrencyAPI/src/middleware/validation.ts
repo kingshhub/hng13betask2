@@ -1,5 +1,3 @@
-// Loads environment variables and validates their presence.
-
 import * as dotenv from 'dotenv';
 import { InternalServerError } from '../utils/apiErrors';
 

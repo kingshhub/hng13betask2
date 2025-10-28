@@ -14,7 +14,7 @@ const env = {
     EXCHANGE_RATE_API_URL: process.env.EXCHANGE_RATE_API_URL!,
 };
 
-// Simple check for mandatory variables
+// check for mandatory variables
 const requiredVars = [
     'DB_HOST',
     'DB_USER',

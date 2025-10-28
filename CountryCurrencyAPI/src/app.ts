@@ -1,5 +1,3 @@
-// Express application configuration
-
 import express, { Application } from 'express';
 import rootRouter from './routes';
 import { errorHandler } from './middleware/errorHandler';

@@ -1,5 +1,3 @@
-// Controller for the /status endpoint
-
 import { Request, Response, NextFunction } from 'express';
 import * as countryService from '../services/country.service';
 

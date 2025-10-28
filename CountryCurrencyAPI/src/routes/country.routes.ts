@@ -1,5 +1,3 @@
-// Router for all /countries routes
-
 import { Router } from 'express';
 import * as countryController from '../controllers/country.controller';
 

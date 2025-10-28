@@ -1,4 +1,3 @@
-// Base class for all custom API errors
 export class ApiError extends Error {
     public statusCode: number;
     public details: any;

@@ -1,5 +1,3 @@
-// Controller for all /countries endpoints
-
 import { Request, Response, NextFunction } from 'express';
 import * as countryService from '../services/country.service';
 import * as imageService from '../services/image.service';
@@ -19,16 +17,11 @@ export const refreshCache = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-/**
- * GET /countries
- * Get all countries with optional filters and sorting.
- * Query params: ?region=... | ?currency=... | ?sort=gdp_desc
- */
+
 export const getCountries = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { region, currency, sort } = req.query;
 
-        // Parse sorting: default to name ASC
         let sortBy: 'gdp' | 'name' | 'population' = 'name';
         let sortDirection: SortDirection = 'ASC';
 
@@ -73,10 +66,6 @@ export const getCountries = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-/**
- * GET /countries/:name
- * Get one country by name.
- */
 export const getCountryByName = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const name = req.params.name;
