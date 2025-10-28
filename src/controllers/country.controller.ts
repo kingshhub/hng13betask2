@@ -4,10 +4,7 @@ import * as imageService from '../services/image.service';
 import { BadRequestError, NotFoundError } from '../utils/apiErrors';
 import { SortDirection } from '../interfaces/Country';
 
-/**
- * POST /countries/refresh
- * Fetches data, processes it, and caches it in the database.
- */
+
 export const refreshCache = async (req: Request, res: Response, next: NextFunction) => {
     try {
         await countryService.refreshCountryCache();

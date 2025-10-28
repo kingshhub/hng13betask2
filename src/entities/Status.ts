@@ -6,7 +6,7 @@ export class Status {
     id!: number;
 
     @Column({ unique: true })
-    key!: string; // 'last_refreshed_at'
+    key!: string;
 
     @Column({ type: 'datetime', nullable: false })
     value!: Date;
