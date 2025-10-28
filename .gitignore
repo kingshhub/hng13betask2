@@ -40,7 +40,6 @@ Specifically for node-html-to-image/puppeteer
 
 .cache/
 pnpm-lock.yaml
-package-lock.json
 
 IDE and OS files
 
