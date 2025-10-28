@@ -1,6 +1,4 @@
-// Entry point for the Node.js application.
-
-import 'reflect-metadata'; // Must be imported first for TypeORM
+import 'reflect-metadata';
 import app from './app';
 import env from './config/env';
 import { AppDataSource } from './config/orm.config';
@@ -9,11 +7,10 @@ const PORT = env.PORT;
 
 const initializeApp = async () => {
     try {
-        // Initialize Database Connection
+        // DB Connection
         await AppDataSource.initialize();
         console.log("Data Source has been initialized!");
-
-        // Create the 'cache' directory if it doesn't exist
+        // create a cache dir
         const fs = require('fs');
         const path = require('path');
         const cacheDir = path.join(process.cwd(), 'cache');

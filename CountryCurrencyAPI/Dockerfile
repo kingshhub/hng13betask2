@@ -1,18 +1,27 @@
-# Use official Node.js image
-FROM node:20
 
-# Set working directory
+FROM node:20-slim AS builder
+
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package*.json ./
+COPY package.json package-lock.json ./
 RUN npm install
 
-# Copy the rest of the app
 COPY . .
 
-# Expose port
+RUN npm run build
+
+FROM node:20-slim AS production
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+
+COPY --from=builder /app/dist ./dist
+
+RUN mkdir -p cache
+
+COPY package.json .
+
 EXPOSE 3000
 
-# Start the server
-CMD ["npm", "run", "dev"]
+CMD [ "npm", "start" ]

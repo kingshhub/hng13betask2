@@ -1,5 +1,3 @@
-// Loads environment variables and validates their presence.
-
 import * as dotenv from 'dotenv';
 import { InternalServerError } from '../utils/apiErrors';
 
@@ -12,8 +10,8 @@ const env = {
     DB_USER: process.env.DB_USER,
     DB_PASSWORD: process.env.DB_PASSWORD,
     DB_NAME: process.env.DB_NAME,
-    COUNTRIES_API_URL: process.env.COUNTRIES_API_URL,
-    EXCHANGE_RATE_API_URL: process.env.EXCHANGE_RATE_API_URL,
+    COUNTRIES_API_URL: process.env.COUNTRIES_API_URL!,
+    EXCHANGE_RATE_API_URL: process.env.EXCHANGE_RATE_API_URL!,
 };
 
 // Simple check for mandatory variables

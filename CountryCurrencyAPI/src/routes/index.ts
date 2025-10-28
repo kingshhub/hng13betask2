@@ -1,5 +1,3 @@
-// Combines all route groups
-
 import { Router } from 'express';
 import countryRoutes from './country.routes';
 import * as statusController from '../controllers/status.controller';

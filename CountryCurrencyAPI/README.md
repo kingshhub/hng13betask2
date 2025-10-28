@@ -1,8 +1,10 @@
-Country Currency & Exchange API
+HNG Backend Task 2: Country Currency & Exchange API
 
-A RESTful API built with Node.js, TypeScript, Express, and TypeORM (MySQL) that caches country and exchange rate data from external sources, computes estimated GDP, and provides CRUD operations with filtering and sorting.
+A robust RESTful API built with Node.js, TypeScript, and Express, designed to fetch, process, cache, and serve global country data, currency exchange rates, and computed estimated GDP values.
 
-Stack
+The application adheres to a clean, layered architecture (Controller, Service, Entity) and uses TypeORM with MySQL for persistence.
+
+ Stack and Technologies
 
 Runtime: Node.js
 
@@ -16,86 +18,71 @@ ORM: TypeORM
 
 HTTP Client: Axios
 
-Image Generation: Node-Canvas
+Image Generation: node-html-to-image (utilizes Puppeteer/Chromium)
 
-Local Setup Instructions
+Testing: Jest & Supertest
+
+🛠️ Setup and Installation
 
 Prerequisites
 
-Node.js (LTS version recommended)
+Node.js (v18+ recommended)
 
-MySQL Server (Local or remote access)
+MySQL Server (accessible locally or remotely)
 
-1. Database Setup
+node-html-to-image Requirements: If you encounter installation issues (especially related to Puppeteer downloading Chromium), you may need to set the PUPPETEER_SKIP_DOWNLOAD environment variable to true and install a compatible headless browser executable manually on your system, though the current setup is designed to be highly portable.
 
-Create a new MySQL database named country_cache_db (or whatever you define in your .env file). The tables (countries and status) will be automatically created by TypeORM upon application startup (synchronize: true).
+1. Clone the Repository
 
-2. Environment Variables
-
-Create a file named .env in the project root based on the provided .env.example template, and fill in your database credentials:
-
-# .env file content
-PORT=3000
-
-# Database Config (MySQL)
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_mysql_password
-DB_NAME=country_cache_db
-
-# External API URLs
-COUNTRIES_API_URL=[https://restcountries.com/v2/all?fields=name,capital,region,population,flag,currencies](https://restcountries.com/v2/all?fields=name,capital,region,population,flag,currencies)
-EXCHANGE_RATE_API_URL=[https://open.er-api.com/v6/latest/USD](https://open.er-api.com/v6/latest/USD)
+git clone <YOUR_REPO_LINK>
+cd <PROJECT_DIRECTORY>
 
 
-3. Installation and Run
-
-Install dependencies:
+2. Install Dependencies
 
 npm install
 
 
-Start the server in development mode (using ts-node and nodemon):
+3. Database Configuration
+
+Create a file named .env in the project root directory based on the .env.example file.
+
+# .env file example
+PORT=3000
+
+# MySQL Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=enter_mysql_password
+DB_NAME=country_cache_db
+
+# External API URLs (Defaults)
+COUNTRIES_API_URL=[https://restcountries.com/v2/all?fields=name,capital,region,population,flag,currencies](https://restcountries.com/v2/all?fields=name,capital,region,population,flag,currencies)
+EXCHANGE_RATE_API_URL=[https://open.er-api.com/v6/latest/USD](https://open.er-api.com/v6/latest/USD)
+
+
+Note: The application uses TypeORM with synchronize: true for development, so the tables (countries and status) will be created automatically on the first run.
+
+4. Running the Application
+
+Command
+
+Description
 
 npm run dev
 
+Start the server in watch mode (using nodemon and ts-node).
 
-The server will start on http://localhost:3000 (or the port defined in .env).
+npm run start
 
-API Documentation
+Build the project to JavaScript (tsc) and run the production build (node dist/server.js).
 
-The API uses application/json for all requests and responses.
+npm test
 
-1. Refresh Cache
+Run all unit and integration tests using Jest.
 
-Fetches data from external APIs, processes it, and updates the MySQL cache. Also generates cache/summary.png.
-
-Endpoint
-
-Method
-
-Description
-
-/countries/refresh
-
-POST
-
-Fetches, computes, and caches all country and exchange data.
-
-Success Response: 200 OK
-
-{ "message": "Country cache successfully refreshed and summary image generated." }
-
-
-Error Response (External API Failure): 503 Service Unavailable
-
-{ "error": "External data source unavailable", "details": "Could not fetch data from [API name]" }
-
-
-2. Get Countries
-
-Retrieves all cached countries with support for filtering and sorting.
+📋 API Endpoints and Documentation
 
 Endpoint
 
@@ -103,88 +90,70 @@ Method
 
 Description
 
-/countries
-
-GET
-
-Get all countries from the cache.
-
-Query Parameters:
-
-Parameter
-
-Example
-
-Description
-
-region
-
-?region=Africa
-
-Filters countries by region (case-insensitive partial match).
-
-currency
-
-?currency=NGN
-
-Filters countries by currency code.
-
-sort
-
-?sort=gdp_desc
-
-Sorts the result. Supports: gdp_asc, gdp_desc, name_asc, name_desc, population_asc, population_desc.
-
-3. Get Single Country
-
-Endpoint
-
-Method
-
-Description
-
-/countries/:name
-
-GET
-
-Get one country by its full name (case-insensitive).
-
-Error Response (Not Found): 404 Not Found
-
-{ "error": "Country 'Atlantis' not found" }
-
-
-4. Delete Country
-
-Endpoint
-
-Method
-
-Description
-
-/countries/:name
-
-DELETE
-
-Deletes a country record by name (case-insensitive).
-
-5. Get Status
-
-Endpoint
-
-Method
-
-Description
+Notes
 
 /status
 
 GET
 
-Shows the total number of cached countries and the last refresh timestamp.
+Get total countries and last refresh timestamp.
 
-Success Response: 200 OK
 
-{
-  "total_countries": 250,
-  "last_refreshed_at": "2025-10-22T18:00:00.000Z"
-}
+
+/countries/refresh
+
+POST
+
+CRITICAL: Fetch data, compute GDP, and cache all records.
+
+Generates cache/summary.png.
+
+/countries/image
+
+GET
+
+Serve the generated summary.png image.
+
+Returns 404 if cache hasn't been refreshed.
+
+/countries
+
+GET
+
+Get all cached countries.
+
+Supports filters: ?region=..., ?currency=....
+
+/countries
+
+GET
+
+Get all cached countries.
+
+Supports sorting: ?sort=gdp_desc (or gdp_asc, name_asc/desc, population_asc/desc).
+
+/countries/:name
+
+GET
+
+Get a single country by name (case-insensitive).
+
+Returns 404 if not found.
+
+/countries/:name
+
+DELETE
+
+Delete a country record by name.
+
+Returns 404 if not found.
+
+Response Formats
+
+All errors follow a consistent JSON structure:
+
+400 Bad Request: {"error": "Validation failed", "details": "..."}
+
+404 Not Found: {"error": "Country not found"}
+
+503 Service Unavailable: {"error": "External data source unavailable", "details": "..."}

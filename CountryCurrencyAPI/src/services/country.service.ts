@@ -1,5 +1,3 @@
-// Business logic for fetching, processing, caching, and querying country data.
-
 import axios from 'axios';
 import { AppDataSource } from '../config/orm.config';
 import { Country } from '../entities/Country';
@@ -12,6 +10,7 @@ import { generateRandomGdpMultiplier } from '../utils/helpers';
 import { generateSummaryImage } from './image.service';
 import env from '../config/env';
 import { FindManyOptions, ILike } from 'typeorm';
+
 
 const countryRepository = AppDataSource.getRepository(Country);
 const statusRepository = AppDataSource.getRepository(Status);
