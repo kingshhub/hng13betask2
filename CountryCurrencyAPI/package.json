@@ -1,0 +1,43 @@
+{
+  "name": "country-currency-api",
+  "version": "1.0.0",
+  "description": "RESTful API for country, currency, and exchange data.",
+  "main": "dist/server.js",
+  "authors": [
+    {
+      "name": "Kingsley Simeon",
+      "email": "formulaking07@gmail.com"}
+    ],
+  "scripts": {
+    "start": "node dist/server.js",
+    "dev": "nodemon --exec ts-node src/server.ts",
+    "build": "tsc",
+    "prestart": "npm run build"
+  },
+  "keywords": [
+    "express",
+    "typescript",
+    "typeorm",
+    "mysql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "canvas": "^2.11.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "joi": "^17.13.3",
+    "mysql2": "^3.10.3",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.20"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/joi": "^17.2.3",
+    "@types/node": "^20.14.9",
+    "nodemon": "^3.1.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  }
+}
