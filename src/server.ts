@@ -3,7 +3,7 @@ import app from './app';
 import env from './config/env';
 import { AppDataSource } from './config/orm.config';
 
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
