@@ -5,7 +5,10 @@ import * as os from 'os';
 import nodeHtmlToImage from 'node-html-to-image';
 import { InternalServerError, NotFoundError } from '../utils/apiErrors';
 
-const CACHE_DIR = path.join(os.tmpdir(), 'hng13betask2-cache');
+// Use Railway-friendly paths in production
+const CACHE_DIR = process.env.NODE_ENV === 'production'
+    ? path.join('/tmp', 'hng13betask2-cache')  // Railway provides /tmp with write access
+    : path.join(os.tmpdir(), 'hng13betask2-cache');
 const IMAGE_PATH = path.join(CACHE_DIR, 'summary.png');
 const WIDTH = 600;
 const HEIGHT = 400;
@@ -143,14 +146,18 @@ export const generateSummaryImage = async (
     lastRefresh: Date
 ): Promise<void> => {
     try {
-        await fs.mkdir(CACHE_DIR, { recursive: true });
-        // Ensure directory is writable
-        await fs.access(CACHE_DIR, (fs.constants || fs).W_OK).catch(async () => {
-            console.warn('Cache directory not writable, attempting to create in OS temp directory');
-            const tmpDir = path.join(os.tmpdir(), 'hng13betask2-cache');
-            await fs.mkdir(tmpDir, { recursive: true });
-            return tmpDir;
-        });
+        // Ensure cache directory exists and is writable
+        try {
+            await fs.mkdir(CACHE_DIR, { recursive: true });
+            await fs.access(CACHE_DIR, (fs.constants || fs).W_OK);
+        } catch (e) {
+            console.warn('Cache directory not writable:', e);
+            // In production on Railway, fallback to /tmp
+            if (process.env.NODE_ENV === 'production') {
+                console.log('Attempting to use /tmp directory in production...');
+                await fs.mkdir('/tmp/hng13betask2-cache', { recursive: true });
+            }
+        }
 
         const html = generateHtmlContent(countries, totalCountries, lastRefresh);
 
@@ -160,19 +167,28 @@ export const generateSummaryImage = async (
             type: 'png',
             encoding: 'binary',
             quality: 100,
-            // Additional flags for containerized environments (Railway)
             puppeteerArgs: {
+                executablePath: process.env.CHROME_BIN || undefined,
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
                     '--disable-gpu',
+                    '--headless',
+                    '--remote-debugging-port=9222',
+                    '--disable-web-security',
+                    `--no-sandbox`,
+                    `--disable-setuid-sandbox`,
+                    '--font-render-hinting=none', // Improve font rendering
+                    '--force-color-profile=srgb',  // Consistent colors
                 ],
                 defaultViewport: {
                     width: WIDTH,
                     height: HEIGHT,
                 },
-            }
+                ignoreDefaultArgs: ['--disable-extensions']
+            },
+            waitUntil: ["networkidle0", "load"]
         });
 
         if (!imageBuffer) {
