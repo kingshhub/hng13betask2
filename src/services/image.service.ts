@@ -5,8 +5,7 @@ import * as os from 'os';
 import nodeHtmlToImage from 'node-html-to-image';
 import { InternalServerError, NotFoundError } from '../utils/apiErrors';
 
-// In production, uses OS temp directory which is writable
-const CACHE_DIR = path.join(os.tmpdir(), 'hng13betask2-cache'); // Always use tmp dir for consistency
+const CACHE_DIR = path.join(os.tmpdir(), 'hng13betask2-cache');
 const IMAGE_PATH = path.join(CACHE_DIR, 'summary.png');
 const WIDTH = 600;
 const HEIGHT = 400;
@@ -18,7 +17,7 @@ const generateHtmlContent = (
 ): string => {
     // Format the GDP for display
     const listItems = countries.map((country, index) => {
-        // Ensure estimated_gdp is treated as a number for formatting
+
         const gdpValue = country.estimated_gdp !== undefined && country.estimated_gdp !== null
             ? parseFloat(country.estimated_gdp as any)
             : 0;

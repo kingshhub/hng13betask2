@@ -20,20 +20,32 @@ export const refreshCountryCache = async (): Promise<void> => {
     let exchangeRates: ExchangeRate;
     const refreshTime = new Date();
 
+    // Create abort controller for timeouts
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 200000);
+
     try {
         const countryResponse = await axios.get<RestCountry[]>(env.COUNTRIES_API_URL, {
-            timeout: 50000,
-            headers: { 'Accept': 'application/json' }
+            signal: controller.signal,
+            timeout: 150000,
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'HNG-Task/1.0'
+            }
         });
         countries = countryResponse.data;
+
+        if (!Array.isArray(countries) || countries.length === 0) {
+            throw new Error('Invalid response from Countries API');
+        }
     } catch (e) {
         console.error('Rest Countries API error:', e);
-        throw new ServiceUnavailableError('Rest Countries API');
+        throw new ServiceUnavailableError('Could not fetch data from Rest Countries API');
     }
 
     try {
         const exchangeResponse = await axios.get<ExchangeRate>(env.EXCHANGE_RATE_API_URL, {
-            timeout: 50000,
+            timeout: 500000,
             headers: { 'Accept': 'application/json' }
         });
         exchangeRates = exchangeResponse.data;
@@ -43,21 +55,35 @@ export const refreshCountryCache = async (): Promise<void> => {
     }
 
     const processedCountries: ICountry[] = countries.map(country => {
-        const currencyCode = country.currencies?.[0]?.code || null;
+        // Get first currency code or null if no currencies
+        const currencyCode = country.currencies && country.currencies.length > 0 ?
+            country.currencies[0].code : null;
         let exchangeRate: number | null = null;
         let estimatedGdp: number | null = null;
 
+        // Handle exchange rate and GDP calculation
         if (currencyCode && exchangeRates.rates[currencyCode]) {
             exchangeRate = exchangeRates.rates[currencyCode];
             const multiplier = generateRandomGdpMultiplier();
-            // estimated_gdp = population × random(1000–2000) ÷ exchange_rate
             estimatedGdp = (country.population * multiplier) / exchangeRate;
+        } else {
+            // Set to null if currency not found in exchange rates
+            exchangeRate = null;
+            estimatedGdp = null;
         }
 
-        // Validation Check (required fields): name, population
-        if (!country.name || !country.population) {
-            console.warn(`Skipping country due to missing required data: ${country.name}`);
-            return null;
+        // Validation Check (required fields): name, population, currency_code
+        const validationErrors: Record<string, string> = {};
+
+        if (!country.name) validationErrors.name = 'is required';
+        if (!country.population) validationErrors.population = 'is required';
+        if (country.currencies && country.currencies.length > 0 && !country.currencies[0].code) {
+            validationErrors.currency_code = 'is required';
+        }
+
+        if (Object.keys(validationErrors).length > 0) {
+            console.warn(`Validation failed for country ${country.name || 'unknown'}:`, validationErrors);
+            throw new BadRequestError('Validation failed', validationErrors);
         }
 
         return {
@@ -146,7 +172,12 @@ export const getAllCountries = async (options: CountryQueryOptions): Promise<Cou
             options.sortBy === 'population' ? 'population' : null;
 
     if (sortField) {
-        findOptions.order = { [sortField]: options.sortDirection };
+        // If sorting by GDP and no direction specified, default to DESC
+        if (sortField === 'estimated_gdp' && !options.sortDirection) {
+            findOptions.order = { [sortField]: 'DESC' };
+        } else {
+            findOptions.order = { [sortField]: options.sortDirection };
+        }
     }
 
     // Sort by name ASC as secondary key for stable sort if a primary sort field is chosen
@@ -177,28 +208,21 @@ export const getCountryByName = async (name: string): Promise<Country> => {
     return country;
 };
 
-/**
- * Deletes a single country by name.
- */
 export const deleteCountryByName = async (name: string): Promise<void> => {
     // First check if country exists to provide accurate 404
     const country = await countryRepository.findOne({
         where: { name: ILike(name) },
-        select: ['id'] // Only select ID for performance
+        select: ['id']
     });
 
     if (!country) {
         throw new NotFoundError(`Country '${name}' not found`);
     }
 
-    // Delete by ID for better performance
     await countryRepository.delete(country.id);
 };
 
 
-/**
- * Retrieves the global status (total count and last refresh time).
- */
 export const getStatus = async (): Promise<{ total_countries: number; last_refreshed_at: Date | null }> => {
     const total_countries = await countryRepository.count();
 
