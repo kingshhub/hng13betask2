@@ -5,9 +5,8 @@ import * as os from 'os';
 import nodeHtmlToImage from 'node-html-to-image';
 import { InternalServerError, NotFoundError } from '../utils/apiErrors';
 
-// Use Railway-friendly paths in production
 const CACHE_DIR = process.env.NODE_ENV === 'production'
-    ? path.join('/tmp', 'hng13betask2-cache')  // Railway provides /tmp with write access
+    ? path.join('/tmp', 'hng13betask2-cache')
     : path.join(os.tmpdir(), 'hng13betask2-cache');
 const IMAGE_PATH = path.join(CACHE_DIR, 'summary.png');
 const WIDTH = 600;
@@ -18,7 +17,6 @@ const generateHtmlContent = (
     totalCountries: number,
     lastRefresh: Date
 ): string => {
-    // Format the GDP for display
     const listItems = countries.map((country, index) => {
 
         const gdpValue = country.estimated_gdp !== undefined && country.estimated_gdp !== null
@@ -166,29 +164,28 @@ export const generateSummaryImage = async (
             output: IMAGE_PATH,
             type: 'png',
             encoding: 'binary',
-            quality: 100,
+            quality: 80, // Reduced quality for faster generation
             puppeteerArgs: {
                 executablePath: process.env.CHROME_BIN || undefined,
+                headless: true,
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
                     '--disable-gpu',
-                    '--headless',
-                    '--remote-debugging-port=9222',
+                    '--headless=new',
                     '--disable-web-security',
-                    `--no-sandbox`,
-                    `--disable-setuid-sandbox`,
-                    '--font-render-hinting=none', // Improve font rendering
-                    '--force-color-profile=srgb',  // Consistent colors
+                    '--disable-extensions',
+                    '--disable-javascript',
+                    '--no-default-browser-check',
                 ],
                 defaultViewport: {
                     width: WIDTH,
                     height: HEIGHT,
+                    deviceScaleFactor: 1,
                 },
-                ignoreDefaultArgs: ['--disable-extensions']
             },
-            waitUntil: ["networkidle0", "load"]
+            waitUntil: "domcontentloaded"
         });
 
         if (!imageBuffer) {
@@ -222,7 +219,6 @@ export const getSummaryImageBuffer = async (): Promise<Buffer> => {
         return fs.readFile(IMAGE_PATH);
     } catch (e: unknown) {
         console.warn('Failed to read summary image:', e);
-        // Try to regenerate if image is missing but directory exists
         if ((e as { code?: string }).code === 'ENOENT') {
             try {
                 const countries = await import('../services/country.service').then(m =>

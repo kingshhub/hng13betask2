@@ -87,44 +87,55 @@ export const refreshCountryCache = async (): Promise<void> => {
         } as ICountry;
     }).filter((c): c is ICountry => c !== null);
 
-    // Database Transaction (Update vs Insert) ---
+    // Optimized Database Transaction with batching and parallel processing ---
     await AppDataSource.transaction(async transactionalEntityManager => {
-        const existingCountries = await transactionalEntityManager.find(Country, { select: ['name', 'id'] });
-        const existingMap = new Map<string, number>();
-        existingCountries.forEach(c => existingMap.set(c.name.toLowerCase(), c.id));
+        // Fetch all existing countries in one query
+        const existingCountries = await transactionalEntityManager.find(Country, {
+            select: ['name', 'id'],
+            cache: true // Enable query caching
+        });
+        const existingMap = new Map(existingCountries.map(c => [c.name.toLowerCase(), c.id]));
 
-        const countriesToSave: Country[] = [];
+        // Process in batches of 50 for better performance
+        const batchSize = 50;
+        const batches = [];
 
-        for (const processed of processedCountries) {
-            const existingId = existingMap.get(processed.name.toLowerCase());
+        for (let i = 0; i < processedCountries.length; i += batchSize) {
+            const batch = processedCountries.slice(i, i + batchSize);
+            const batchToUpdate: Country[] = [];
+            const batchToInsert: Country[] = [];
 
-            const countryEntity = new Country();
-            Object.assign(countryEntity, processed);
+            for (const processed of batch) {
+                const existingId = existingMap.get(processed.name.toLowerCase());
+                const countryEntity = new Country();
+                Object.assign(countryEntity, processed);
 
-            if (existingId) {
-                // Update Logic: Match existing country by name (case-insensitive)
-                countryEntity.id = existingId;
-                await transactionalEntityManager.save(countryEntity);
-            } else {
-                // Insert Logic
-                countriesToSave.push(countryEntity);
+                if (existingId) {
+                    countryEntity.id = existingId;
+                    batchToUpdate.push(countryEntity);
+                } else {
+                    batchToInsert.push(countryEntity);
+                }
+            }
+
+            // Add batch operations to queue
+            if (batchToUpdate.length > 0) {
+                batches.push(transactionalEntityManager.save(batchToUpdate));
+            }
+            if (batchToInsert.length > 0) {
+                batches.push(transactionalEntityManager.insert(Country, batchToInsert));
             }
         }
 
-        if (countriesToSave.length > 0) {
-            await transactionalEntityManager.insert(Country, countriesToSave);
-        }
+        // Execute all batch operations in parallel
+        await Promise.all(batches);
 
-        const statusRecord = await transactionalEntityManager.findOneBy(Status, { key: 'last_refreshed_at' });
-        if (statusRecord) {
-            statusRecord.value = refreshTime;
-            await transactionalEntityManager.save(statusRecord);
-        } else {
-            const newStatus = new Status();
-            newStatus.key = 'last_refreshed_at';
-            newStatus.value = refreshTime;
-            await transactionalEntityManager.save(newStatus);
-        }
+        // Update status record
+        await transactionalEntityManager.upsert(
+            Status,
+            { key: 'last_refreshed_at', value: refreshTime },
+            ['key']
+        );
     });
 
     // --- Step 4: Image Generation ---
