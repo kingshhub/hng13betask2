@@ -15,12 +15,6 @@ import { FindManyOptions, ILike } from 'typeorm';
 const countryRepository = AppDataSource.getRepository(Country);
 const statusRepository = AppDataSource.getRepository(Status);
 
-/**
- * 1. Fetches country and exchange data.
- * 2. Processes and calculates estimated GDP.
- * 3. Saves/updates records in a transaction.
- * 4. Generates summary image.
- */
 export const refreshCountryCache = async (): Promise<void> => {
     let countries: RestCountry[];
     let exchangeRates: ExchangeRate;

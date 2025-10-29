@@ -1,5 +1,3 @@
-// TypeORM Data Source Configuration
-
 import { DataSource } from 'typeorm';
 import env from './env';
 import { Country } from '../entities/Country';

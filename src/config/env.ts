@@ -4,7 +4,7 @@ import { InternalServerError } from '../utils/apiErrors';
 dotenv.config();
 
 const env = {
-    PORT: process.env.PORT || 3000,
+    PORT: process.env.PORT || 5000,
     DB_HOST: process.env.DB_HOST,
     DB_PORT: parseInt(process.env.DB_PORT || '3306', 10),
     DB_USER: process.env.DB_USER,
