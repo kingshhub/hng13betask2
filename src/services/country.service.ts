@@ -22,12 +22,12 @@ export const refreshCountryCache = async (): Promise<void> => {
 
     // Create abort controller for timeouts
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 200000);
+    const timeout = setTimeout(() => controller.abort(), 25000); // 25 second timeout
 
     try {
         const countryResponse = await axios.get<RestCountry[]>(env.COUNTRIES_API_URL, {
             signal: controller.signal,
-            timeout: 150000,
+            timeout: 20000, // 20 second timeout
             headers: {
                 'Accept': 'application/json',
                 'User-Agent': 'HNG-Task/1.0'
@@ -45,7 +45,7 @@ export const refreshCountryCache = async (): Promise<void> => {
 
     try {
         const exchangeResponse = await axios.get<ExchangeRate>(env.EXCHANGE_RATE_API_URL, {
-            timeout: 500000,
+            timeout: 20000, // 20 second timeout
             headers: { 'Accept': 'application/json' }
         });
         exchangeRates = exchangeResponse.data;
@@ -55,6 +55,12 @@ export const refreshCountryCache = async (): Promise<void> => {
     }
 
     const processedCountries: ICountry[] = countries.map(country => {
+        // Basic validation first
+        if (!country.name || !country.population) {
+            console.warn(`Skipping country due to missing required fields: ${country.name || 'unknown'}`);
+            return null;
+        }
+
         // Get first currency code or null if no currencies
         const currencyCode = country.currencies && country.currencies.length > 0 ?
             country.currencies[0].code : null;
@@ -64,26 +70,8 @@ export const refreshCountryCache = async (): Promise<void> => {
         // Handle exchange rate and GDP calculation
         if (currencyCode && exchangeRates.rates[currencyCode]) {
             exchangeRate = exchangeRates.rates[currencyCode];
-            const multiplier = generateRandomGdpMultiplier();
+            const multiplier = generateRandomGdpMultiplier(); // Random between 1000-2000
             estimatedGdp = (country.population * multiplier) / exchangeRate;
-        } else {
-            // Set to null if currency not found in exchange rates
-            exchangeRate = null;
-            estimatedGdp = null;
-        }
-
-        // Validation Check (required fields): name, population, currency_code
-        const validationErrors: Record<string, string> = {};
-
-        if (!country.name) validationErrors.name = 'is required';
-        if (!country.population) validationErrors.population = 'is required';
-        if (country.currencies && country.currencies.length > 0 && !country.currencies[0].code) {
-            validationErrors.currency_code = 'is required';
-        }
-
-        if (Object.keys(validationErrors).length > 0) {
-            console.warn(`Validation failed for country ${country.name || 'unknown'}:`, validationErrors);
-            throw new BadRequestError('Validation failed', validationErrors);
         }
 
         return {
