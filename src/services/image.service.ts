@@ -1,18 +1,18 @@
-
 import { Country } from '../entities/Country';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as os from 'os';
 import nodeHtmlToImage from 'node-html-to-image';
 import { InternalServerError, NotFoundError } from '../utils/apiErrors';
 
-const IMAGE_PATH = path.join(process.cwd(), 'cache', 'summary.png');
-const CACHE_DIR = path.join(process.cwd(), 'cache');
+// In production, uses OS temp directory which is writable
+const CACHE_DIR = process.env.NODE_ENV === 'production'
+    ? path.join(os.tmpdir(), 'hng13betask2-cache')
+    : path.join(process.cwd(), 'cache');
+const IMAGE_PATH = path.join(CACHE_DIR, 'summary.png');
 const WIDTH = 600;
 const HEIGHT = 400;
 
-/**
- * Generates the HTML content for the summary image.
- */
 const generateHtmlContent = (
     countries: Country[],
     totalCountries: number,
@@ -147,6 +147,13 @@ export const generateSummaryImage = async (
 ): Promise<void> => {
     try {
         await fs.mkdir(CACHE_DIR, { recursive: true });
+        // Ensure directory is writable
+        await fs.access(CACHE_DIR, (fs.constants || fs).W_OK).catch(async () => {
+            console.warn('Cache directory not writable, attempting to create in OS temp directory');
+            const tmpDir = path.join(os.tmpdir(), 'hng13betask2-cache');
+            await fs.mkdir(tmpDir, { recursive: true });
+            return tmpDir;
+        });
 
         const html = generateHtmlContent(countries, totalCountries, lastRefresh);
 
@@ -156,9 +163,14 @@ export const generateSummaryImage = async (
             type: 'png',
             encoding: 'binary',
             quality: 100,
-            // Adjust viewport to match the desired image size
+            // Additional flags for containerized environments (Railway)
             puppeteerArgs: {
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                ],
                 defaultViewport: {
                     width: WIDTH,
                     height: HEIGHT,
@@ -195,8 +207,21 @@ export const getSummaryImageBuffer = async (): Promise<Buffer> => {
     try {
         await fs.access(IMAGE_PATH);
         return fs.readFile(IMAGE_PATH);
-    } catch (e) {
-
-        throw new NotFoundError('Summary image not found');
+    } catch (e: unknown) {
+        console.warn('Failed to read summary image:', e);
+        // Try to regenerate if image is missing but directory exists
+        if ((e as { code?: string }).code === 'ENOENT') {
+            try {
+                const countries = await import('../services/country.service').then(m =>
+                    m.getAllCountries({ sortBy: 'gdp', sortDirection: 'DESC' })
+                );
+                const status = await import('../services/country.service').then(m => m.getStatus());
+                await generateSummaryImage(countries.slice(0, 5), status.total_countries, status.last_refreshed_at || new Date());
+                return fs.readFile(IMAGE_PATH);
+            } catch (regenerateError) {
+                console.error('Failed to regenerate missing image:', regenerateError);
+            }
+        }
+        throw new NotFoundError('Summary image not found. Try refreshing the cache first.');
     }
 };
