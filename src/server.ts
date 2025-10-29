@@ -5,9 +5,6 @@ import { AppDataSource } from './config/orm.config';
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server running successfully on http://0.0.0.0:${PORT}`);
-});
 
 const initializeApp = async () => {
     try {

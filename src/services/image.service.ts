@@ -150,8 +150,6 @@ export const generateSummaryImage = async (
 
         const html = generateHtmlContent(countries, totalCountries, lastRefresh);
 
-        // Use node-html-to-image to convert the HTML string to a PNG buffer
-        // PuppeteerArgs are included to ensure stability in containerized environments.
         const imageBuffer = await nodeHtmlToImage({
             html: html,
             output: IMAGE_PATH,
@@ -193,10 +191,6 @@ export const generateSummaryImage = async (
         throw new InternalServerError('Failed to generate summary image.');
     }
 };
-
-/**
- * Reads the summary image file buffer.
- */
 export const getSummaryImageBuffer = async (): Promise<Buffer> => {
     try {
         await fs.access(IMAGE_PATH);

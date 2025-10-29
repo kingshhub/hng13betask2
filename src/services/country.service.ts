@@ -20,7 +20,6 @@ export const refreshCountryCache = async (): Promise<void> => {
     let exchangeRates: ExchangeRate;
     const refreshTime = new Date();
 
-    // --- Step 1: Fetch External Data with Error Handling ---
     try {
         const countryResponse = await axios.get<RestCountry[]>(env.COUNTRIES_API_URL);
         countries = countryResponse.data;
@@ -35,7 +34,6 @@ export const refreshCountryCache = async (): Promise<void> => {
         throw new ServiceUnavailableError('Open ER API');
     }
 
-    // --- Step 2: Processing and Calculation ---
     const processedCountries: ICountry[] = countries.map(country => {
         const currencyCode = country.currencies?.[0]?.code || null;
         let exchangeRate: number | null = null;
@@ -67,7 +65,7 @@ export const refreshCountryCache = async (): Promise<void> => {
         } as ICountry;
     }).filter((c): c is ICountry => c !== null);
 
-    // --- Step 3: Database Transaction (Update vs Insert) ---
+    // Database Transaction (Update vs Insert) ---
     await AppDataSource.transaction(async transactionalEntityManager => {
         const existingCountries = await transactionalEntityManager.find(Country, { select: ['name', 'id'] });
         const existingMap = new Map<string, number>();
@@ -119,9 +117,6 @@ export const refreshCountryCache = async (): Promise<void> => {
 
 // --- CRUD Operations ---
 
-/**
- * Retrieves all countries with optional filtering and sorting.
- */
 export const getAllCountries = async (options: CountryQueryOptions): Promise<Country[]> => {
     const findOptions: FindManyOptions<Country> = {
         where: {},
@@ -161,9 +156,7 @@ export const getAllCountries = async (options: CountryQueryOptions): Promise<Cou
     }
 };
 
-/**
- * Retrieves a single country by name.
- */
+
 export const getCountryByName = async (name: string): Promise<Country> => {
     const country = await countryRepository.findOne({
         where: { name: ILike(name) },
