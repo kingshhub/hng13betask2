@@ -17,7 +17,7 @@ export const AppDataSource = new DataSource({
     subscribers: [],
     extra: {
         ssl: {
-            rejectUnauthorized: false
+            rejectUnauthorized: true
         }
     }
 });
