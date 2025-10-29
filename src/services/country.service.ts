@@ -22,7 +22,7 @@ export const refreshCountryCache = async (): Promise<void> => {
 
     try {
         const countryResponse = await axios.get<RestCountry[]>(env.COUNTRIES_API_URL, {
-            timeout: 5000,
+            timeout: 50000,
             headers: { 'Accept': 'application/json' }
         });
         countries = countryResponse.data;
@@ -33,7 +33,7 @@ export const refreshCountryCache = async (): Promise<void> => {
 
     try {
         const exchangeResponse = await axios.get<ExchangeRate>(env.EXCHANGE_RATE_API_URL, {
-            timeout: 5000,
+            timeout: 50000,
             headers: { 'Accept': 'application/json' }
         });
         exchangeRates = exchangeResponse.data;
