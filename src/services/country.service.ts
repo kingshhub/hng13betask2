@@ -21,16 +21,24 @@ export const refreshCountryCache = async (): Promise<void> => {
     const refreshTime = new Date();
 
     try {
-        const countryResponse = await axios.get<RestCountry[]>(env.COUNTRIES_API_URL);
+        const countryResponse = await axios.get<RestCountry[]>(env.COUNTRIES_API_URL, {
+            timeout: 5000,
+            headers: { 'Accept': 'application/json' }
+        });
         countries = countryResponse.data;
     } catch (e) {
+        console.error('Rest Countries API error:', e);
         throw new ServiceUnavailableError('Rest Countries API');
     }
 
     try {
-        const exchangeResponse = await axios.get<ExchangeRate>(env.EXCHANGE_RATE_API_URL);
+        const exchangeResponse = await axios.get<ExchangeRate>(env.EXCHANGE_RATE_API_URL, {
+            timeout: 5000,
+            headers: { 'Accept': 'application/json' }
+        });
         exchangeRates = exchangeResponse.data;
     } catch (e) {
+        console.error('Exchange Rate API error:', e);
         throw new ServiceUnavailableError('Open ER API');
     }
 
@@ -173,11 +181,18 @@ export const getCountryByName = async (name: string): Promise<Country> => {
  * Deletes a single country by name.
  */
 export const deleteCountryByName = async (name: string): Promise<void> => {
-    const deleteResult = await countryRepository.delete({ name: ILike(name) });
+    // First check if country exists to provide accurate 404
+    const country = await countryRepository.findOne({
+        where: { name: ILike(name) },
+        select: ['id'] // Only select ID for performance
+    });
 
-    if (deleteResult.affected === 0) {
+    if (!country) {
         throw new NotFoundError(`Country '${name}' not found`);
     }
+
+    // Delete by ID for better performance
+    await countryRepository.delete(country.id);
 };
 
 

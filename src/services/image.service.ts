@@ -6,9 +6,7 @@ import nodeHtmlToImage from 'node-html-to-image';
 import { InternalServerError, NotFoundError } from '../utils/apiErrors';
 
 // In production, uses OS temp directory which is writable
-const CACHE_DIR = process.env.NODE_ENV === 'production'
-    ? path.join(os.tmpdir(), 'hng13betask2-cache')
-    : path.join(process.cwd(), 'cache');
+const CACHE_DIR = path.join(os.tmpdir(), 'hng13betask2-cache'); // Always use tmp dir for consistency
 const IMAGE_PATH = path.join(CACHE_DIR, 'summary.png');
 const WIDTH = 600;
 const HEIGHT = 400;

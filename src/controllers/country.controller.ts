@@ -6,10 +6,25 @@ import { SortDirection } from '../interfaces/Country';
 
 
 export const refreshCache = async (req: Request, res: Response, next: NextFunction) => {
+    // Set a timeout for the entire operation
+    const timeoutMs = 25000; // 25 seconds
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Operation timed out')), timeoutMs)
+    );
+
     try {
-        await countryService.refreshCountryCache();
+        // Race between the refresh operation and timeout
+        await Promise.race([
+            countryService.refreshCountryCache(),
+            timeoutPromise
+        ]);
+
         res.status(200).json({ message: 'Country cache successfully refreshed and summary image generated.' });
     } catch (e) {
+        if (e instanceof Error && e.message === 'Operation timed out') {
+            res.status(504).json({ error: 'Request timed out while refreshing cache' });
+            return;
+        }
         next(e);
     }
 };
@@ -107,16 +122,27 @@ export const deleteCountryByName = async (req: Request, res: Response, next: Nex
  * Serve the generated summary image.
  */
 export const getSummaryImage = async (req: Request, res: Response, next: NextFunction) => {
+    const timeoutMs = 10000; // 10 seconds timeout
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Operation timed out')), timeoutMs)
+    );
+
     try {
-        const imageBuffer = await imageService.getSummaryImageBuffer();
+        const imageBuffer = await Promise.race([
+            imageService.getSummaryImageBuffer(),
+            timeoutPromise
+        ]);
 
         res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
         res.send(imageBuffer);
     } catch (e) {
+        if (e instanceof Error && e.message === 'Operation timed out') {
+            return res.status(504).json({ error: 'Request timed out while generating image' });
+        }
         // NotFoundError from imageService returns a 404 with JSON error
         if (e instanceof NotFoundError) {
-            return res.status(404).json({ "error": "Summary image not found" });
+            return res.status(404).json({ error: 'Summary image not found' });
         }
         next(e);
     }
