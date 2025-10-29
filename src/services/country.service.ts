@@ -115,7 +115,6 @@ export const refreshCountryCache = async (): Promise<void> => {
             await transactionalEntityManager.insert(Country, countriesToSave);
         }
 
-        // Update Global Status
         const statusRecord = await transactionalEntityManager.findOneBy(Status, { key: 'last_refreshed_at' });
         if (statusRecord) {
             statusRecord.value = refreshTime;

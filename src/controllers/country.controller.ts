@@ -6,8 +6,8 @@ import { SortDirection } from '../interfaces/Country';
 
 
 export const refreshCache = async (req: Request, res: Response, next: NextFunction) => {
-    // Set a timeout for the entire operation
-    const timeoutMs = 25000; // 25 seconds
+    // Set a timeout for the entire operation. 
+    const timeoutMs = 150000; // 150 seconds = 2.5 minutes
     const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Operation timed out')), timeoutMs)
     );
@@ -122,7 +122,7 @@ export const deleteCountryByName = async (req: Request, res: Response, next: Nex
  * Serve the generated summary image.
  */
 export const getSummaryImage = async (req: Request, res: Response, next: NextFunction) => {
-    const timeoutMs = 10000; // 10 seconds timeout
+    const timeoutMs = 120000; // 120 seconds timeout for image generation
     const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Operation timed out')), timeoutMs)
     );
