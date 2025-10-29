@@ -1,7 +1,11 @@
+import fs from 'fs';
+import path from 'path';
 import { DataSource } from 'typeorm';
 import env from './env';
 import { Country } from '../entities/Country';
 import { Status } from '../entities/Status';
+
+const caCertPath = path.join(__dirname, '../certs/ca.pem');
 
 export const AppDataSource = new DataSource({
     type: 'mysql',
@@ -17,7 +21,8 @@ export const AppDataSource = new DataSource({
     subscribers: [],
     extra: {
         ssl: {
-            rejectUnauthorized: false
+            ca: fs.readFileSync(caCertPath).toString(),
+            rejectUnauthorized: true
         }
     }
 });
