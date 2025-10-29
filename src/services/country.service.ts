@@ -22,12 +22,12 @@ export const refreshCountryCache = async (): Promise<void> => {
 
     // Create abort controller for timeouts
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+    const timeout = setTimeout(() => controller.abort(), 250000);
 
     try {
         const countryResponse = await axios.get<RestCountry[]>(env.COUNTRIES_API_URL, {
             signal: controller.signal,
-            timeout: 20000, // 20 second timeout
+            timeout: 200000,
             headers: {
                 'Accept': 'application/json',
                 'User-Agent': 'HNG-Task/1.0'
@@ -45,7 +45,7 @@ export const refreshCountryCache = async (): Promise<void> => {
 
     try {
         const exchangeResponse = await axios.get<ExchangeRate>(env.EXCHANGE_RATE_API_URL, {
-            timeout: 20000, // 20 second timeout
+            timeout: 200000,
             headers: { 'Accept': 'application/json' }
         });
         exchangeRates = exchangeResponse.data;
