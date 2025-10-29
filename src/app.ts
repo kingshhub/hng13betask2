@@ -11,4 +11,9 @@ app.use('/', rootRouter);
 
 app.use(errorHandler);
 
+app.get('/', (req, res) => {
+    res.send('API is running');
+});
+
+
 export default app;
